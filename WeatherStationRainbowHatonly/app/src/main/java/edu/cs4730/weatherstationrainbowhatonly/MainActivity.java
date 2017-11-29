@@ -50,22 +50,28 @@ public class MainActivity extends Activity {
 
     private SensorManager mSensorManager;
 
+    //Capacitive buttons (GPIO)
     private ButtonInputDriver mButtonA, mButtonB, mButtonC;
 
+    //BMP280 temperature sensor (I2C) and pressure too.
     private Bmx280SensorDriver mEnvironmentalSensorDriver;
 
+    //HT16K33 segment display (I2C)
     private AlphanumericDisplay mDisplay;
-    //the lights above the buttons.
+
+    //the lights above the buttons.  LEDs (GPIO)
     private Gpio mLedR, mLedG, mLedB;
-    //light strip/ rainbow lights.
+
+    //light strip/ rainbow lights.  APA102 RGB LEDs (SPI)
     private Apa102 mLedstrip;
     private int[] mRainbow = new int[7];
     private static final int LEDSTRIP_BRIGHTNESS = 1;
 
-
+    //Piezo Buzzer (PWM)
     private int SPEAKER_READY_DELAY_MS = 300;
     private Speaker mSpeaker;
 
+    //data variables for the last temperature and pressure readings.
     private float mLastTemperature;
     private float mLastPressure;
 
@@ -173,6 +179,8 @@ public class MainActivity extends Activity {
         } catch (IOException e) {
             throw new RuntimeException("Error initializing GPIO button", e);
         }
+
+        //  Open the bmx280 device and driver.  register callbacks and start the listeners (register)
         // Continuously report temperature and pressure.
         try {
             mEnvironmentalSensorDriver = RainbowHat.createSensorDriver();
@@ -290,6 +298,10 @@ public class MainActivity extends Activity {
         });
     }
 
+    /**
+     * Handle the down key events that were causes.  we setup for A, B, and C key codes above, so those
+     * should be the only codes we get.
+     */
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_A) {
@@ -305,6 +317,11 @@ public class MainActivity extends Activity {
         logthis("A unknown keycode was called." + keyCode, true);
         return super.onKeyUp(keyCode, event);
     }
+
+    /**
+     * Handle the up key events that were causes.  we setup for A, B, and C key codes above, so those
+     * should be the only codes we get.
+     */
 
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
@@ -322,6 +339,18 @@ public class MainActivity extends Activity {
         return super.onKeyUp(keyCode, event);
     }
 
+
+    /**
+     * This is a helper function, since it called by buttons and the board buttons as well.
+     * Turns on the led for the button A is Red, B is Green, and C is blue on down.
+     * a changes to display pressure instead of temperature.
+     * b also turns on the ledstrip
+     * c also plays sound.
+     *
+     *
+     * @param keyCode
+     * @param down
+     */
     private void updateLeds(int keyCode, boolean down) {
         if (down) {
             if (keyCode == KeyEvent.KEYCODE_A) {
@@ -390,6 +419,10 @@ public class MainActivity extends Activity {
         }
     }
 
+    /**
+     * Helper function to display to the HT16K33 segment display (I2C)
+     * @param value
+     */
     private void updateDisplay(float value) {
         if (mDisplay != null) {
             try {
@@ -400,7 +433,10 @@ public class MainActivity extends Activity {
         }
     }
 
-
+    /**
+     * Helper function to play a series of sounds.
+     *
+     */
     private void playSound() {
         logthis("Playing sound", false);
         final ValueAnimator slide = ValueAnimator.ofFloat(440, 440 * 4);
@@ -437,6 +473,11 @@ public class MainActivity extends Activity {
         }, SPEAKER_READY_DELAY_MS);
     }
 
+    /**
+     * Helper function to log and to display to textview logger on the screen (assuming it's plugged into screen)
+     * @param item
+     * @param error
+     */
     void logthis(String item, boolean error) {
         if (error) {
             Log.e(TAG, item);
@@ -446,6 +487,9 @@ public class MainActivity extends Activity {
         logger.append(item + "\n");
     }
 
+    /**
+     * Turn off everything and clear display.
+     */
     @Override
     protected void onPause() {
         super.onPause();
