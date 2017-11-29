@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:text="Button A: "
+        android:text="Led R/Button A: "
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"/>
 
@@ -34,7 +34,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:text="Button B: "
+        android:text="Led G/Button B: "
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView"/>
 
@@ -54,7 +54,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:text="Button C: "
+        android:text="Led B/Button C: "
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView3"/>
 
@@ -128,4 +128,66 @@
         app:layout_constraintBottom_toBottomOf="@+id/textView11"
         app:layout_constraintStart_toEndOf="@+id/textView11"
         app:layout_constraintTop_toTopOf="@+id/textView11"/>
+
+    <Button
+        android:id="@+id/btn_a"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text=" A "
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView11"/>
+
+    <Button
+        android:id="@+id/btn_b"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text=" B "
+        app:layout_constraintBottom_toBottomOf="@+id/btn_a"
+        app:layout_constraintStart_toEndOf="@+id/btn_a"
+        app:layout_constraintTop_toTopOf="@+id/btn_a"/>
+
+    <Button
+        android:id="@+id/btn_c"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text=" C "
+        app:layout_constraintBottom_toBottomOf="@+id/btn_b"
+        app:layout_constraintStart_toEndOf="@+id/btn_b"
+        app:layout_constraintTop_toTopOf="@+id/btn_b"/>
+
+
+    <ScrollView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btn_a">
+
+        <TextView
+            android:id="@+id/logger"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="Logger:\n"
+            />
+
+    </ScrollView>
+
+    <Button
+        android:id="@+id/btn_exit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginTop="8dp"
+        android:text="Exit"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
 </android.support.constraint.ConstraintLayout>
