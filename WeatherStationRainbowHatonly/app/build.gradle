@@ -19,13 +19,14 @@ android {
 }
 
 dependencies {
+    //https://bintray.com/google/androidthings for versions.
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
-    compileOnly 'com.google.android.things:androidthings:+'
-    compile 'com.google.android.things.contrib:driver-rainbowhat:+'
-    compile 'com.google.android.things.contrib:driver-button:+'
-    compile 'com.google.android.things.contrib:driver-bmx280:0.2'
-    compile 'com.google.android.things.contrib:driver-ht16k33:0.3'
-    compile 'com.google.android.things.contrib:driver-apa102:0.3'
-    compile 'com.google.android.things.contrib:driver-pwmspeaker:0.2'
+    compileOnly 'com.google.android.things:androidthings:0.5.1-devpreview'
+    compile 'com.google.android.things.contrib:driver-rainbowhat:0.5'
+    compile 'com.google.android.things.contrib:driver-button:0.4'
+    compile 'com.google.android.things.contrib:driver-bmx280:0.4'
+    compile 'com.google.android.things.contrib:driver-ht16k33:0.4'
+    compile 'com.google.android.things.contrib:driver-apa102:0.5'
+    compile 'com.google.android.things.contrib:driver-pwmspeaker:0.3'
 }
