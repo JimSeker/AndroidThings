@@ -5,6 +5,8 @@ google Android Things examples
 
 <b>WeatherStationRainbowHatonly</b> similar to google's weather station exampe, except only usable on the hat, plus uses button B and C.
 
+<b>SneseHAT Demo</b> is an example use the Sense Hat.  Right only the LED matrix is used and you need a mouse and monitor.  You can change colors of the LED matrix on the screen.
+
 Note: I have a respberry Pi, so this will be bias for the Pi.
 
 This is in early states and developer preview.  things are likely to change.
