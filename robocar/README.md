@@ -17,6 +17,10 @@ Pre-requisites
 --------------
 To build the car, you will need the following hardware:
 
+- this is the better [The best to place to find the items and build directions] (http://www.androidrobocar.com/)
+
+ - https://www.hackster.io/46886/android-robocar-553991  
+
 - An [Android-Things powered device](https://developer.android.com/things/hardware/developer-kits.html) with a connected camera.  This demo ran on a Raspberry Pi 3, but is in no way limited to that device.
 
 - A robot car chassis.  We had great luck with the [Runt rover robotics kit](https://www.amazon.com/Actobotics-Junior-Runt-Rover/dp/B00UAWVC64).
