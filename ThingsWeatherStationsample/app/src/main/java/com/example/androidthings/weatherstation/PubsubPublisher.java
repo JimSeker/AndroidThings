@@ -79,7 +79,7 @@ class PubsubPublisher {
         final GoogleCredential credentials;
         try {
             credentials = GoogleCredential.fromStream(jsonCredentials).createScoped(
-                    Collections.singleton(PubsubScopes.PUBSUB));
+                Collections.singleton(PubsubScopes.PUBSUB));
         } finally {
             try {
                 jsonCredentials.close();
@@ -93,7 +93,7 @@ class PubsubPublisher {
                 mHttpTransport = AndroidHttp.newCompatibleTransport();
                 JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
                 mPubsub = new Pubsub.Builder(mHttpTransport, jsonFactory, credentials)
-                        .setApplicationName(mAppname).build();
+                    .setApplicationName(mAppname).build();
             }
         });
     }
@@ -136,7 +136,7 @@ class PubsubPublisher {
         @Override
         public void run() {
             ConnectivityManager connectivityManager =
-                    (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+                (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
             NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
             if (activeNetwork == null || !activeNetwork.isConnectedOrConnecting()) {
                 Log.e(TAG, "no active network");
@@ -152,7 +152,7 @@ class PubsubPublisher {
                 Log.d(TAG, "publishing message: " + messagePayload);
                 PubsubMessage m = new PubsubMessage();
                 m.setData(Base64.encodeToString(messagePayload.toString().getBytes(),
-                        Base64.NO_WRAP));
+                    Base64.NO_WRAP));
                 PublishRequest request = new PublishRequest();
                 request.setMessages(Collections.singletonList(m));
                 mPubsub.projects().topics().publish(mTopic, request).execute();
@@ -164,7 +164,7 @@ class PubsubPublisher {
         }
 
         private JSONObject createMessagePayload(float temperature, float pressure)
-                throws JSONException {
+            throws JSONException {
             JSONObject sensorData = new JSONObject();
             if (!Float.isNaN(temperature)) {
                 sensorData.put("temperature", String.valueOf(temperature));

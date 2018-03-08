@@ -29,7 +29,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
-import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.animation.LinearInterpolator;
 import android.widget.ImageView;
@@ -41,16 +40,10 @@ import com.google.android.things.contrib.driver.button.ButtonInputDriver;
 import com.google.android.things.contrib.driver.ht16k33.AlphanumericDisplay;
 import com.google.android.things.contrib.driver.pwmspeaker.Speaker;
 import com.google.android.things.pio.Gpio;
-import com.google.android.things.pio.PeripheralManagerService;
-
-import com.google.android.things.contrib.driver.rainbowhat.RainbowHat;
+import com.google.android.things.pio.PeripheralManager;
 
 import java.io.IOException;
 
-
-/*
- *  rewrite this with the hat userdriver.
- */
 public class WeatherStationActivity extends Activity {
 
     private static final String TAG = WeatherStationActivity.class.getSimpleName();
@@ -62,7 +55,7 @@ public class WeatherStationActivity extends Activity {
 
     private SensorManager mSensorManager;
 
-    private ButtonInputDriver mButtonInputDriver, mButtonInputDriver2;
+    private ButtonInputDriver mButtonInputDriver;
     private Bmx280SensorDriver mEnvironmentalSensorDriver;
     private AlphanumericDisplay mDisplay;
     private DisplayMode mDisplayMode = DisplayMode.TEMPERATURE;
@@ -76,7 +69,6 @@ public class WeatherStationActivity extends Activity {
     private static final float BAROMETER_RANGE_RAINY = 990.f;
 
     private Gpio mLed;
-    private Gpio mLedG;
 
     private int SPEAKER_READY_DELAY_MS = 300;
     private Speaker mSpeaker;
@@ -146,9 +138,9 @@ public class WeatherStationActivity extends Activity {
     private SensorEventListener mTemperatureListener = new SensorEventListener() {
         @Override
         public void onSensorChanged(SensorEvent event) {
-            //mLastTemperature = (event.values[0] * 1.8F) + 32.0F;
-            mLastTemperature = event.values[0];
-            // Log.d(TAG, "temperature sensor changed: " + mLastTemperature);
+            //mLastTemperature = event.values[0];  //C
+            mLastTemperature = (event.values[0] * 1.8F) + 32.0F;  //F
+            Log.d(TAG, "sensor changed: " + mLastTemperature);
             if (mDisplayMode == DisplayMode.TEMPERATURE) {
                 updateDisplay(mLastTemperature);
             }
@@ -165,7 +157,7 @@ public class WeatherStationActivity extends Activity {
         @Override
         public void onSensorChanged(SensorEvent event) {
             mLastPressure = event.values[0];
-            // Log.d(TAG, "sensor changed: " + mLastPressure);
+            Log.d(TAG, "sensor changed: " + mLastPressure);
             if (mDisplayMode == DisplayMode.PRESSURE) {
                 updateDisplay(mLastPressure);
             }
@@ -190,14 +182,9 @@ public class WeatherStationActivity extends Activity {
 
         // GPIO button that generates 'A' keypresses (handled by onKeyUp method)
         try {
-
             mButtonInputDriver = new ButtonInputDriver(BoardDefaults.getButtonGpioPin(),
                 Button.LogicState.PRESSED_WHEN_LOW, KeyEvent.KEYCODE_A);
             mButtonInputDriver.register();
-            mButtonInputDriver2 = RainbowHat.createButtonBInputDriver(KeyEvent.KEYCODE_B);
-            mButtonInputDriver2.register();
-
-
             Log.d(TAG, "Initialized GPIO Button that generates a keypress with KEYCODE_A");
         } catch (IOException e) {
             throw new RuntimeException("Error initializing GPIO button", e);
@@ -245,8 +232,8 @@ public class WeatherStationActivity extends Activity {
 
         // GPIO led
         try {
-            PeripheralManagerService pioService = new PeripheralManagerService();
-            mLed = pioService.openGpio(BoardDefaults.getLedGpioPin());
+            PeripheralManager pioManager = PeripheralManager.getInstance();
+            mLed = pioManager.openGpio(BoardDefaults.getLedGpioPin());
             mLed.setEdgeTriggerType(Gpio.EDGE_NONE);
             mLed.setDirection(Gpio.DIRECTION_OUT_INITIALLY_LOW);
             mLed.setActiveType(Gpio.ACTIVE_HIGH);
@@ -311,19 +298,13 @@ public class WeatherStationActivity extends Activity {
         if (keyCode == KeyEvent.KEYCODE_A) {
             mDisplayMode = DisplayMode.PRESSURE;
             updateDisplay(mLastPressure);
-
             try {
                 mLed.setValue(true);
             } catch (IOException e) {
                 Log.e(TAG, "error updating LED", e);
             }
             return true;
-        } else if (keyCode == KeyEvent.KEYCODE_B) {
-            Log.wtf(TAG, "B keycode!");
-            rainbowon(true);
-            return true;
         }
-        Log.e(TAG, "A keycode was called." + keyCode);
         return super.onKeyUp(keyCode, event);
     }
 
@@ -332,15 +313,11 @@ public class WeatherStationActivity extends Activity {
         if (keyCode == KeyEvent.KEYCODE_A) {
             mDisplayMode = DisplayMode.TEMPERATURE;
             updateDisplay(mLastTemperature);
-
             try {
                 mLed.setValue(false);
             } catch (IOException e) {
                 Log.e(TAG, "error updating LED", e);
             }
-            return true;
-        } else if (keyCode == KeyEvent.KEYCODE_B) {
-            rainbowon(false);
             return true;
         }
         return super.onKeyUp(keyCode, event);
@@ -430,44 +407,25 @@ public class WeatherStationActivity extends Activity {
 
     private void updateBarometer(float pressure) {
         // Update UI.
-
         if (!mHandler.hasMessages(MSG_UPDATE_BAROMETER_UI)) {
             mHandler.sendEmptyMessageDelayed(MSG_UPDATE_BAROMETER_UI, 100);
         }
         // Update led strip.
         if (mLedstrip == null) {
-            Log.e(TAG, "No led strip.");
             return;
         }
-        //   Log.d(TAG, "pressure is " + pressure);
         float t = (pressure - BAROMETER_RANGE_LOW) / (BAROMETER_RANGE_HIGH - BAROMETER_RANGE_LOW);
-        // Log.d(TAG, "t is " + t);
         int n = (int) Math.ceil(mRainbow.length * t);
         n = Math.max(0, Math.min(n, mRainbow.length));
         int[] colors = new int[mRainbow.length];
-        //     Log.d(TAG, "n is " + n);
         for (int i = 0; i < n; i++) {
             int ri = mRainbow.length - 1 - i;
-            Log.d(TAG, "i is " + i + " ri" + ri);
             colors[ri] = mRainbow[ri];
         }
         try {
             mLedstrip.write(colors);
-            //mLedstrip.write(mRainbow);
         } catch (IOException e) {
             Log.e(TAG, "Error setting ledstrip", e);
         }
-    }
-
-    void rainbowon(boolean on) {
-        Log.e(TAG, "ranbow");
-
-        try {
-            mLedstrip.write(mRainbow);
-        } catch (IOException e) {
-            Log.e(TAG, "Error setting ledstrip", e);
-        }
-
-
     }
 }
