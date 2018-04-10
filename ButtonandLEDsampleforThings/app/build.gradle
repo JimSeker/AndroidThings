@@ -36,6 +36,6 @@ android {
 }
 
 dependencies {
-    compile 'com.google.android.things.contrib:driver-button:0.6'
-    provided 'com.google.android.things:androidthings:0.7-devpreview'
+    implementation 'com.google.android.things.contrib:driver-button:0.6'
+    compileOnly 'com.google.android.things:androidthings:0.7-devpreview'
 }

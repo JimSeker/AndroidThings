@@ -16,8 +16,10 @@ import android.widget.ImageView;
 import android.widget.Spinner;
 
 
+import com.google.android.things.contrib.driver.bmx280.Bmx280;
 import com.google.android.things.contrib.driver.sensehat.LedMatrix;
 import com.google.android.things.contrib.driver.sensehat.SenseHat;
+
 
 import java.io.IOException;
 
@@ -57,11 +59,25 @@ public class MainActivity extends Activity {
 
     ColorList myColor = new ColorList();
 
+    Bmx280 mBmx280;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        //need a LSM9DS1 driver for this.  we don't have one yet.
+  /*      try {
+            mBmx280 = new Bmx280("I2C5");//find the right one....
+            mBmx280.setTemperatureOversampling(Bmx280.OVERSAMPLING_1X);
+            float temperature = mBmx280.readTemperature();
+            Log.v(TAG, "Temperature is " + temperature);
+        } catch (IOException e) {
+            Log.wtf(TAG, "no temperature sensor!");
+        }
+*/
+
+
         iv = findViewById(R.id.display);
         mySpinner = findViewById(R.id.spinner);
 

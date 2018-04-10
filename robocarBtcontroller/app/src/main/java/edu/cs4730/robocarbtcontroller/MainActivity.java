@@ -27,6 +27,8 @@ import java.util.ArrayList;
  * <p>
  *
  * @see <a href="https://github.com/androidthings/contrib-drivers#readme">https://github.com/androidthings/contrib-drivers#readme</a>
+ *
+ * need to rewrite the bluetooth for the dev7 https://developer.android.com/things/sdk/apis/bluetooth.html pairing.
  */
 public class MainActivity extends Activity implements Nes30Listener {
 

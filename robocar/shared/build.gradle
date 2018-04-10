@@ -18,7 +18,7 @@ apply plugin: 'com.android.library'
 
 android {
     compileSdkVersion 27
-    buildToolsVersion "27.0.1"
+    buildToolsVersion "27.0.3"
 
     defaultConfig {
         minSdkVersion 24
@@ -44,9 +44,9 @@ dependencies {
 
     testImplementation 'junit:junit:4.12'
 
-    api 'com.google.android.gms:play-services-nearby:11.6.2'
-    api "android.arch.lifecycle:extensions:1.0.0"
-    annotationProcessor "android.arch.lifecycle:compiler:1.0.0"
+    api 'com.google.android.gms:play-services:12.0.1'  //don't change this like lint says too.  stupid lint.
+    api "android.arch.lifecycle:extensions:1.1.1"
+    annotationProcessor "android.arch.lifecycle:compiler:1.1.1"
 
 
 }
