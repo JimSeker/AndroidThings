@@ -12,13 +12,14 @@ import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
-import android.view.View;
 import android.widget.TextView;
 
+import com.google.android.things.bluetooth.BluetoothConnectionManager;
+import com.google.android.things.bluetooth.BluetoothPairingCallback;
+import com.google.android.things.bluetooth.PairingParams;
 import com.google.android.things.contrib.driver.motorhat.MotorHat;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 
 
@@ -30,12 +31,10 @@ import java.util.ArrayList;
  *
  * need to rewrite the bluetooth for the dev7 https://developer.android.com/things/sdk/apis/bluetooth.html pairing.
  */
-public class MainActivity extends Activity implements Nes30Listener {
+public class MainActivity extends Activity {
 
     static final String TAG = "RobocarBT";
-    public static final String NES30_MAC_ADDRESS = "16:08:22:03:A5:D2"; // Robo1
-    Nes30Manager nes30Manager;
-    Nes30Connection nes30Connection;
+
     //car and motor hat variables.
     private MotorHat mMotorHat;
     private static final int[] ALL_MOTORS = {0, 1, 2, 3};
@@ -48,9 +47,10 @@ public class MainActivity extends Activity implements Nes30Listener {
 
     //for bluetooth
     private BluetoothAdapter mBluetoothAdapter;
-    private static final int REQUEST_ENABLE_BT = 101;
-    private static final int DISCOVERABLE_TIMEOUT_MS = 3000;
-    private static final int REQUEST_CODE_ENABLE_DISCOVERABLE = 100;
+    public static final String BOOTHTOOTH_MAC_ADDRESS = "16:08:22:03:A5:D2"; // Robo1
+    BluetoothConnectionManager mBluetoothConnectionManager;
+
+
     //rest fo the variables;
     TextView logger;
     Boolean isJoyStick = false, isGamePad = false;
@@ -69,49 +69,61 @@ public class MainActivity extends Activity implements Nes30Listener {
             throw new RuntimeException("Failed to create MotorHat", e);
         }
 
-        findViewById(R.id.button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                enableDiscoverable();
-            }
-        });
+        //If we need to find a bluetooth controller.
+        mBluetoothConnectionManager = BluetoothConnectionManager.getInstance();
+        mBluetoothConnectionManager.registerPairingCallback(mBluetoothPairingCallback);
+        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
-        //startbt();
-        // Remote control (for RCDriver)
-        setupBluetooth();
-        //   mBluetoothAdapter.setName("Robby Car");
     }
 
+    private BluetoothPairingCallback mBluetoothPairingCallback = new BluetoothPairingCallback() {
 
-    private void setupBluetooth() {
-        nes30Manager = new Nes30Manager(this);
-        nes30Connection = new Nes30Connection(this, NES30_MAC_ADDRESS);
-        logthis("BT status: %b" + " " + nes30Connection.isEnabled());
-        logthis("Paired devices: %d" + " " + nes30Connection.getPairedDevices().size());
+        @Override
+        public void onPairingInitiated(BluetoothDevice bluetoothDevice,
+                                       PairingParams pairingParams) {
+            // Handle incoming pairing request or confirmation of outgoing pairing request
+           // handlePairingRequest(bluetoothDevice, pairingParams);
+            Log.wtf(TAG, "onpairing to device" + bluetoothDevice.getAddress());
 
-        BluetoothDevice nes30device = nes30Connection.getSelectedDevice();
-        if (nes30device == null) {
-            logthis("Starting discovery: %b" + " " + nes30Connection.startDiscovery());
-        } else {
-            logthis("Creating bond: %b" + " " + nes30Connection.createBond(nes30device));
+            mBluetoothConnectionManager.finishPairing(bluetoothDevice);
         }
-    }
 
+        @Override
+        public void onPaired(BluetoothDevice bluetoothDevice) {
+            // Device pairing complete
+            Log.wtf(TAG, "paired to device" + bluetoothDevice.getAddress());
+        }
+
+        @Override
+        public void onUnpaired(BluetoothDevice bluetoothDevice) {
+            // Device unpaired
+            Log.wtf(TAG, "UNpaired device" + bluetoothDevice.getAddress());
+        }
+
+        @Override
+        public void onPairingError(BluetoothDevice bluetoothDevice,
+                                   BluetoothPairingCallback.PairingError pairingError) {
+            // Something went wrong!
+            Log.wtf(TAG, "Error with device" + bluetoothDevice.getAddress());
+            Log.wtf(TAG, pairingError.toString());
+        }
+    };
 
     @Override
     public void onResume() {
         super.onResume();  // Always call the superclass method first
-//        if (getGameControllerIds().isEmpty()) {
-//            logthis("no bluetooth starting discovery.");
-//            // Register for broadcasts when a device is discovered.
+        if (getGameControllerIds().isEmpty()) {
+            logthis("no bluetooth starting discovery.");
+            // Register for broadcasts when a device is discovered.
 //
-//            IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-//            filter.addAction("android.bluetooth.adapter.action.DISCOVERY_STARTED");
-//            filter.addAction( "android.bluetooth.adapter.action.DISCOVERY_FINISHED");
-//            registerReceiver(mReceiver, filter);
-//            mBluetoothAdapter.startDiscovery();
-//
-//        }
+            IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+            filter.addAction("android.bluetooth.adapter.action.DISCOVERY_STARTED");
+            filter.addAction( "android.bluetooth.adapter.action.DISCOVERY_FINISHED");
+            registerReceiver(mReceiver, filter);
+            mBluetoothAdapter.startDiscovery();
+        } else {
+            logthis("found bluetooth device.");
+        }
     }
 
 
@@ -127,101 +139,28 @@ public class MainActivity extends Activity implements Nes30Listener {
             } else if (BluetoothDevice.ACTION_FOUND.equals(action)) {
                 // Discovery has found a device. Get the BluetoothDevice
                 // object and its info from the Intent.
-                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                String deviceName = device.getName();
-                String deviceHardwareAddress = device.getAddress(); // MAC address
+                BluetoothDevice remoteDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                String deviceName = remoteDevice.getName();
+                String deviceHardwareAddress = remoteDevice.getAddress(); // MAC address
                 logthis("Found: " + deviceName + " " + deviceHardwareAddress);
-//                    BluetoothDevice device = intent.getParcelableExtra("android.bluetooth.device.extra.DEVICE");
+                if ( deviceHardwareAddress.compareTo(BOOTHTOOTH_MAC_ADDRESS) ==0) {  //my controller
+                    logthis("connecting to bluetooth device");
+                    mBluetoothConnectionManager.initiatePairing(remoteDevice);
 
-
-//                device .getClass() .getMethod("setPairingConfirmation", boolean.class).invoke(device, true);
-//                device.getClass().getMethod("cancelPairingUserInput", boolean.class).invoke(device);
-
-
-                device.createBond();
-                device.setPairingConfirmation(false);
-//                try {
-//                    Method method = device.getClass().getMethod("createBond", (Class[]) null);
-//                    method.invoke(device, (Object[]) null);
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
+                    mBluetoothConnectionManager.connect(remoteDevice);
+                    getGameControllerIds();
+                }
             }
         }
     };
 
-
-    //This code will check to see if there is a bluetooth device and
-    //turn it on if is it turned off.
-    public void startbt() {
-        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        if (mBluetoothAdapter == null) {
-            // Device does not support Bluetooth
-            logthis("This device does not support bluetooth");
-            return;
-        }
-        //make sure bluetooth is enabled.
-        if (!mBluetoothAdapter.isEnabled()) {
-            logthis("There is bluetooth, but turned off");
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-        } else {
-            logthis("The bluetooth is ready to use.");
-            //bluetooth is on, so list paired devices from here.
-        }
-    }
-
-    /**
-     * Enable the current {@link BluetoothAdapter} to be discovered (available for pairing) for
-     * the next {@link #DISCOVERABLE_TIMEOUT_MS} ms.
-     */
-    private void enableDiscoverable() {
-        Log.d(TAG, "Registering for discovery.");
-        Intent discoverableIntent =
-            new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-        discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION,
-            DISCOVERABLE_TIMEOUT_MS);
-        startActivityForResult(discoverableIntent, REQUEST_CODE_ENABLE_DISCOVERABLE);
-    }
-
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_CODE_ENABLE_DISCOVERABLE) {
-            Log.d(TAG, "Enable discoverable returned with result " + resultCode);
-
-            // ResultCode, as described in BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE, is either
-            // RESULT_CANCELED or the number of milliseconds that the device will stay in
-            // discoverable mode. In a regular Android device, the user will see a popup requesting
-            // authorization, and if they cancel, RESULT_CANCELED is returned. In Android Things,
-            // on the other hand, the authorization for pairing is always given without user
-            // interference, so RESULT_CANCELED should never be returned.
-            if (resultCode == RESULT_CANCELED) {
-                Log.e(TAG, "Enable discoverable has been cancelled by the user. " +
-                    "This should never happen in an Android Things device.");
-                return;
-            }
-            Log.i(TAG, "Bluetooth adapter successfully set to discoverable mode. " +
-                "Any A2DP source can find it with the name " + mBluetoothAdapter.getName() +
-                " and pair for the next " + DISCOVERABLE_TIMEOUT_MS + " ms. " +
-                "Try looking for it on your phone, for example.");
-
-            // There is nothing else required here, since Android framework automatically handles
-            // A2DP Sink. Most relevant Bluetooth events, like connection/disconnection, will
-            // generate corresponding broadcast intents or profile proxy events that you can
-            // listen to and react appropriately.
-
-
-        }
-    }
 
     //getting the "joystick" or dpad motion.
     @Override
     public boolean onGenericMotionEvent(android.view.MotionEvent motionEvent) {
         float xaxis = 0.0f, yaxis = 0.0f;
         boolean handled = false;
-
+        logthis("motion event");
         //if both are true, this code will show both JoyStick and dpad.  Which one you want to use is
         // up to you
         if (isJoyStick) {
@@ -349,58 +288,6 @@ public class MainActivity extends Activity implements Nes30Listener {
         return handled;
     }
 
-      /*
-   * Implements Nes30Listener
-   */
-
-    @Override
-    public void onKeyPress(@Nes30Manager.ButtonCode int keyCode, boolean isDown) {
-        logthis("hi from listener");
-        switch (keyCode) {
-            case Nes30Manager.BUTTON_UP_CODE:
-                goForward();
-                break;
-            case Nes30Manager.BUTTON_DOWN_CODE:
-                goBackward();
-                break;
-            case Nes30Manager.BUTTON_LEFT_CODE:
-                turnLeft();
-                break;
-            case Nes30Manager.BUTTON_RIGHT_CODE:
-                turnRight();
-                break;
-            case Nes30Manager.BUTTON_X_CODE:
-                if (isDown) {
-                    logthis("Starting camera session for single pics.");
-                }
-                break;
-            case Nes30Manager.BUTTON_Y_CODE:
-                logthis("Y button");
-                break;
-            case Nes30Manager.BUTTON_A_CODE:
-                logthis("a button");
-                break;
-            case Nes30Manager.BUTTON_B_CODE:
-                logthis("Button B pressed.");
-                break;
-            case Nes30Manager.BUTTON_L_CODE:
-                logthis("Button L pressed.");
-                break;
-            case Nes30Manager.BUTTON_R_CODE:
-                logthis("Button R pressed.");
-                break;
-            case Nes30Manager.BUTTON_SELECT_CODE:
-                logthis("Select button pressed.");
-                break;
-            case Nes30Manager.BUTTON_START_CODE:
-                logthis("Start button pressed.");
-                break;
-            case Nes30Manager.BUTTON_KONAMI:
-                // Do your magic here ;-)
-                logthis("Button KON pressed.");
-                break;
-        }
-    }
 
 
     public void logthis(String item) {
@@ -410,6 +297,7 @@ public class MainActivity extends Activity implements Nes30Listener {
 
     //From Google's page on controller-input
     public ArrayList getGameControllerIds() {
+        logthis("Checking for controllers.");
         ArrayList gameControllerDeviceIds = new ArrayList();
         int[] deviceIds = InputDevice.getDeviceIds();
         for (int deviceId : deviceIds) {
