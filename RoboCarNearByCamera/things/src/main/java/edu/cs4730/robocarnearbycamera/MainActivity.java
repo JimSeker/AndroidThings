@@ -17,7 +17,10 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
+import com.google.android.things.contrib.driver.motorhat.MotorHat;
+
 import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
@@ -42,20 +45,21 @@ import java.nio.ByteBuffer;
 public class MainActivity extends Activity {
 
     private CameraHandler mCameraHandler;
-    /** Camera image capture size */
+    /**
+     * Camera image capture size
+     */
     private static final int PREVIEW_IMAGE_WIDTH = 640;
     private static final int PREVIEW_IMAGE_HEIGHT = 480;
 
+    //for the car
+    roboCar car;
+
+    //Nearby stuff
+    NearByMgr nearByMgr;
+
+
     static String TAG = "MainActivity";
     ImageView iv_cam;
-
-    Camera2Preview mPreview;
-    FrameLayout preview;
-    //for taking a picture.
-    Camera2CapturePic mCapture;
-    Thread myThread;
-
-
     String ConnectedEndPointId;
 
     @Override
@@ -63,33 +67,54 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         iv_cam = findViewById(R.id.iv_cam);
-
+        try {
+            car = new roboCar(new MotorHat(BoardDefaults.getI2cBus()), null);
+            Log.d(TAG, "car started!");
+        } catch (IOException e) {
+            Log.d(TAG, "Motor Hat NOT found!!!!!!\n");
+            e.printStackTrace();
+            car = null;
+        }
         initCamera();
 
         findViewById(R.id.button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 loadPhoto();
-           //     sendPictures();
+
             }
         });
 
-//        //camera stuff
-//        preview = (FrameLayout) findViewById(R.id.camera2_preview);
-//
-//        //we have to pass the camera id that we want to use to the surfaceview
-//        CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
-//        try {
-//            String cameraId = manager.getCameraIdList()[0];
-//            mPreview = new Camera2Preview(this, cameraId);
-//            preview.addView(mPreview);
-//
-//        } catch (CameraAccessException e) {
-//            Log.v(TAG, "Failed to get a camera ID!");
-//            e.printStackTrace();
-//        }
-//
+        nearByMgr = new NearByMgr(this, new NearByMgr.OnNearByCallback() {
+            @Override
+            public void onConnectionStatus(int Status) {
+                //once connected, kick start the picture sending.
+                // if -1, then connect died, and stop sending.
+            }
 
+            @Override
+            public void onDataBytes(String Data) {
+                switch (Data) {
+                    case "S":  //stop
+                        car.allstop();
+                        break;
+                    case "F": //forward
+                        car.goForward();
+                        break;
+                    case "B": //backward
+                        car.goBackward();
+                        break;
+                    case "L": //turn left
+                        car.turnLeft();
+                        break;
+                    case "R":  //turn right
+                        car.turnRight();
+                        break;
+                    default:
+                        Log.wtf(TAG, "unknown command" + Data);
+                }
+            }
+        });
 
     }
 
@@ -104,16 +129,16 @@ public class MainActivity extends Activity {
             new ImageReader.OnImageAvailableListener() {
                 @Override
                 public void onImageAvailable(ImageReader imageReader) {
-                  // iv_cam.set  imageReader.acquireNextImage());
+                    // iv_cam.set  imageReader.acquireNextImage());
                     Log.wtf(TAG, "got a picture, attempting to display");
                     Image image = imageReader.acquireLatestImage();
                     ByteBuffer buffer = image.getPlanes()[0].getBuffer();
                     byte[] bytes = new byte[buffer.capacity()];
                     buffer.get(bytes);
                     Bitmap bitmapImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
-                   iv_cam.setImageBitmap(bitmapImage);
-                  //  mCameraHandler.resetCamera();
-                   closeCamera();  //this is a hack that needs fixed.
+                    iv_cam.setImageBitmap(bitmapImage);
+                    //  mCameraHandler.resetCamera();
+                    closeCamera();  //this is a hack that needs fixed.
                     initCamera();
 
                 }
@@ -135,58 +160,26 @@ public class MainActivity extends Activity {
         mCameraHandler.takePicture();
     }
 
-    void sendPictures() {
-        myThread = new Thread(new sendPics(250));
-        //so going have to be a thread or async task or this will overload the main activity.
-        if (mCapture == null) // While I would like the declare this earlier, the camera is not setup yet, so wait until now.
-            mCapture = new Camera2CapturePic(this, mPreview);
-        mCapture.setThread(myThread);
-        myThread.start();
 
-
-
-    }
-
+    /**
+     * The job of this thread is send pictures to the phone, so they can see where it going.
+     * We can't send a media stream, so this is faking it...
+     */
     class sendPics implements Runnable {
-        int sleeptime =250;
-        sendPics (int sleeptime) {
+        int sleeptime = 250;
+
+        sendPics(int sleeptime) {
             this.sleeptime = sleeptime;
         }
 
         @Override
         public void run() {
             int i = 0;
-            File mediaFile;
-            File mediaStorageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-            // This location works best if you want the created images to be shared
-            // between applications and persist after your app has been uninstalled.
 
-            // Create the storage directory if it does not exist
-            if (!mediaStorageDir.exists()) {
-                if (!mediaStorageDir.mkdirs()) {
-                    Log.d("MyCameraApp", "failed to create directory");
-                    return;
-                }
-            }
-            ConnectedEndPointId = "something";
             while (ConnectedEndPointId != "") {
-                mediaFile = new File(mediaStorageDir.getPath() + File.separator +
-                    "IMG_" + i + ".jpg");
-                Log.d(TAG, "File is " + mediaFile.getAbsolutePath());
+                Log.d(TAG, "i is " + i);
                 // get an image from the camera
-                if (mCapture.reader != null) {  //I'm sure it's setup correctly if reader is not null.
-                    mCapture.TakePicture(mediaFile);
-                    try {
-                        synchronized (myThread) {
-                            myThread.wait();
-                        }
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    Log.d(TAG, "pic taken, now sending.");
-                   // send(mediaFile);
-                    Log.d(TAG, "Send successful");
-                }
+                mCameraHandler.takePicture();
                 try {
                     Thread.sleep(sleeptime);
                 } catch (InterruptedException e) {
