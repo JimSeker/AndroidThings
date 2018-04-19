@@ -24,7 +24,5 @@ dependencies {
     implementation 'com.google.android.things.contrib:driver-motorhat:0.2'
     implementation 'com.google.android.things.contrib:driver-ht16k33:0.5'
     implementation 'com.google.android.things.contrib:driver-button:0.6'
-    // Logging
-    implementation 'com.jakewharton.timber:timber:4.5.1'
     implementation 'com.android.support:support-annotations:27.1.1'
 }
