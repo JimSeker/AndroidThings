@@ -17,6 +17,8 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
+import com.google.android.gms.nearby.connection.ConnectionsStatusCodes;
+import com.google.android.gms.nearby.messages.NearbyMessagesStatusCodes;
 import com.google.android.things.contrib.driver.motorhat.MotorHat;
 
 import java.io.File;
@@ -89,7 +91,18 @@ public class MainActivity extends Activity {
             @Override
             public void onConnectionStatus(int Status) {
                 //once connected, kick start the picture sending.
-                // if -1, then connect died, and stop sending.
+                if (Status == ConnectionsStatusCodes.STATUS_OK) {
+                    //start sending pic
+                } else {
+                    //issue all stop just in case.
+                    if (car != null)
+                        car.allstop();
+                    // if -1, then connect died, and stop sending.  same for all of them, start advert again.
+                    //stop sending pict's.
+
+                    //and startup the advertising again.
+                    nearByMgr.startAdvertising();
+                }
             }
 
             @Override

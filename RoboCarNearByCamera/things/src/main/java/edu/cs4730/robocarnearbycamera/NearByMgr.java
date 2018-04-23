@@ -29,7 +29,7 @@ import java.io.FileNotFoundException;
 
 public class NearByMgr {
    private static final String ServiceId = "edu.cs4730.robocarnearbycamera";  //need a unique value to identify app.
-    final static String TAG = "AdvertiseFragment";
+    final static String TAG = "NearByMgr";
     private String UserNickName = "RoboCar"; //idk what this should be.  doc's don't say.
 
     private  String ConnectedEndPointId;
@@ -62,7 +62,7 @@ public class NearByMgr {
      * Start advertising the nearby.  It sets the callback from above with what to once we get a connection
      * request.
      */
-    private void startAdvertising() {
+    public void startAdvertising() {
 
         AdvertisingOptions.Builder builder = new  AdvertisingOptions.Builder();
 
