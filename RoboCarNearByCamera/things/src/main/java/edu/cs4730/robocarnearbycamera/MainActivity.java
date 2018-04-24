@@ -128,7 +128,7 @@ public class MainActivity extends Activity {
                 }
             }
         });
-
+        nearByMgr.startAdvertising();
     }
 
     /**

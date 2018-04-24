@@ -97,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void sendMessage(String item) {
-        if (ConnectedEndPointId.compareTo("") != 0) { //ie if we are connected
+        if (ConnectedEndPointId != null && ConnectedEndPointId.compareTo("") != 0) { //ie if we are connected
             //now send the message to the car.
             send(item);
         }
@@ -194,6 +194,9 @@ public class MainActivity extends AppCompatActivity {
                             //if stream or file, we need to know when the transfer has finished.  ignoring this right now.
                             if (payloadTransferUpdate.getStatus() == PayloadTransferUpdate.Status.SUCCESS) {
                                 Payload payload = incomingPayloads.remove(payloadTransferUpdate.getPayloadId());
+
+                                if (payload == null) return;
+
                                 if (payload.getType() == Payload.Type.FILE) {
                                     File payloadFile = payload.asFile().asJavaFile();
                                     Bitmap mypic = BitmapFactory.decodeFile(payloadFile.getAbsolutePath());
