@@ -1,6 +1,7 @@
 package edu.cs4730.robocarnearbycamera;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 import android.support.annotation.NonNull;
@@ -25,6 +26,7 @@ import com.google.android.gms.tasks.Task;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
 
 
 public class NearByMgr {
@@ -157,10 +159,12 @@ public class NearByMgr {
                         break;
                     case ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED:
                         logthis("Status rejected.  :(");
+                        ConnectedEndPointId = "";
                         // The connection was rejected by one or both sides.
                         break;
                     case ConnectionsStatusCodes.STATUS_ERROR:
                         logthis("Status error.");
+                        ConnectedEndPointId = "";
                         // The connection broke before it was able to be accepted.
                         break;
                 }
@@ -177,6 +181,39 @@ public class NearByMgr {
     public interface OnNearByCallback {
         public void onConnectionStatus(int Status);
         public void onDataBytes(String Data);
+    }
+
+
+    public void sendStream(InputStream is ) {
+        //basic error checking
+        if (ConnectedEndPointId.compareTo("") == 0)   //empty string, no connection
+            return;
+
+        Payload payload = Payload.fromStream(is);
+        Log.wtf(TAG, "sending image.");
+        // sendPayload (List<String> endpointIds, Payload payload)  if more then one connection allowed.
+        Nearby.getConnectionsClient(context).
+            sendPayload(ConnectedEndPointId,  //end point to end to
+                payload)   //the actual payload of data to send.
+            .addOnSuccessListener(new OnSuccessListener<Void>() {  //don't know if need this one.
+                @Override
+                public void onSuccess(Void aVoid) {
+                    logthis("Message send successfully.");
+                }
+            })
+            .addOnCompleteListener(new OnCompleteListener<Void>() {
+                @Override
+                public void onComplete(@NonNull Task<Void> task) {
+                    logthis("Message send completed.");
+                }
+            })
+            .addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    logthis("Message send failed.");
+                    e.printStackTrace();
+                }
+            });
     }
 
     /**

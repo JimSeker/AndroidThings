@@ -114,7 +114,7 @@ public class CameraHandler {
     /**
      * Begin a still image capture
      */
-    public void takePicture() {
+    public void takePicture(Handler backgroundHandler) {
         if (mCameraDevice == null) {
             Log.w(TAG, "Cannot capture image. Camera not initialized.");
             return;
@@ -124,7 +124,7 @@ public class CameraHandler {
             mCameraDevice.createCaptureSession(
                 Collections.singletonList(mImageReader.getSurface()),
                 mSessionCallback,
-                null);
+                backgroundHandler);
         } catch (CameraAccessException cae) {
             Log.e(TAG, "Cannot create camera capture session", cae);
         }

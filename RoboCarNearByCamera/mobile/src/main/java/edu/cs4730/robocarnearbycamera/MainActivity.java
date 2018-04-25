@@ -181,28 +181,34 @@ public class MainActivity extends AppCompatActivity {
                                 logthis("Received data is " + stuff);
 
                             } else if (payload.getType() == Payload.Type.FILE) {
-                                logthis("We got a file. ");
+                                logthis("We got a file. why?");
                                 // Add this to our tracking map, so that we can retrieve the payload later.
-                                incomingPayloads.put(payload.getId(), payload);
-                            } else if (payload.getType() == Payload.Type.STREAM)
+                               // incomingPayloads.put(payload.getId(), payload);
+                            } else if (payload.getType() == Payload.Type.STREAM) {
                                 //payload.asStream().asInputStream()
-                                logthis("We got a stream, not handled");
+                                logthis("We got a stream,  handled");
+                                //incomingPayloads.put(payload.getId(), payload);
+                                Bitmap mypic = BitmapFactory.decodeStream(payload.asStream().asInputStream());
+                                myImageView.setImageBitmap(mypic);
+                            }
                         }
 
                         @Override
                         public void onPayloadTransferUpdate(String endpointId, PayloadTransferUpdate payloadTransferUpdate) {
                             //if stream or file, we need to know when the transfer has finished.  ignoring this right now.
+
                             if (payloadTransferUpdate.getStatus() == PayloadTransferUpdate.Status.SUCCESS) {
-                                Payload payload = incomingPayloads.remove(payloadTransferUpdate.getPayloadId());
-
-                                if (payload == null) return;
-
-                                if (payload.getType() == Payload.Type.FILE) {
-                                    File payloadFile = payload.asFile().asJavaFile();
-                                    Bitmap mypic = BitmapFactory.decodeFile(payloadFile.getAbsolutePath());
-                                    myImageView.setImageBitmap(mypic);
-                                }
-
+//                                Payload payload = incomingPayloads.remove(payloadTransferUpdate.getPayloadId());
+//
+//                                // Payload payload = incomingPayloads.remove();
+//                                long size = payloadTransferUpdate.getTotalBytes();
+//                                if( size > 0) {
+//
+//                                    Bitmap mypic = BitmapFactory.decodeByteArray(payloadTransferUpdate.get, 0, size);
+//
+//                                    myImageView.setImageBitmap(mypic);
+//                                }
+                                Log.wtf(TAG, "something is done!");
                             }
                         }
                     });

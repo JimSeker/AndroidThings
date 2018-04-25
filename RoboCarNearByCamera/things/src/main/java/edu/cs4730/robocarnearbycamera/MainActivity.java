@@ -21,8 +21,10 @@ import com.google.android.gms.nearby.connection.ConnectionsStatusCodes;
 import com.google.android.gms.nearby.messages.NearbyMessagesStatusCodes;
 import com.google.android.things.contrib.driver.motorhat.MotorHat;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 
 /**
@@ -58,7 +60,7 @@ public class MainActivity extends Activity {
 
     //Nearby stuff
     NearByMgr nearByMgr;
-
+    Thread myThread;
 
     static String TAG = "MainActivity";
     ImageView iv_cam;
@@ -93,13 +95,16 @@ public class MainActivity extends Activity {
                 //once connected, kick start the picture sending.
                 if (Status == ConnectionsStatusCodes.STATUS_OK) {
                     //start sending pic
+                    sendPictures();
+                    ConnectedEndPointId = "something";
                 } else {
                     //issue all stop just in case.
                     if (car != null)
                         car.allstop();
                     // if -1, then connect died, and stop sending.  same for all of them, start advert again.
                     //stop sending pict's.
-
+                    ConnectedEndPointId = "";
+                        //should auto stop...
                     //and startup the advertising again.
                     nearByMgr.startAdvertising();
                 }
@@ -143,16 +148,22 @@ public class MainActivity extends Activity {
                 @Override
                 public void onImageAvailable(ImageReader imageReader) {
                     // iv_cam.set  imageReader.acquireNextImage());
-                    Log.wtf(TAG, "got a picture, attempting to display");
+                   // Log.wtf(TAG, "got a picture, attempting to display");
                     Image image = imageReader.acquireLatestImage();
-                    ByteBuffer buffer = image.getPlanes()[0].getBuffer();
+                                        ByteBuffer buffer = image.getPlanes()[0].getBuffer();
                     byte[] bytes = new byte[buffer.capacity()];
                     buffer.get(bytes);
                     Bitmap bitmapImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
                     iv_cam.setImageBitmap(bitmapImage);
+                    InputStream targetStream = new ByteArrayInputStream(bytes);
+                    nearByMgr.sendStream(targetStream);
                     //  mCameraHandler.resetCamera();
                     closeCamera();  //this is a hack that needs fixed.
                     initCamera();
+                    synchronized(myThread) {
+                        Log.d(TAG, "waiting up thread to take next pic.");
+                        myThread.notify(); //in theory, this should wakeup the thread.  OR myThread.notifyAll()
+                    }
 
                 }
             });
@@ -170,7 +181,17 @@ public class MainActivity extends Activity {
      * When done, the method {@link # onPhotoReady(Bitmap)} must be called with the image.
      */
     private void loadPhoto() {
-        mCameraHandler.takePicture();
+        mCameraHandler.takePicture(null);
+    }
+
+
+    void sendPictures() {
+        myThread = new Thread(new sendPics(1000));  //
+        //so going have to be a thread or async task or this will overload the main activity.
+
+        myThread.start();
+
+
     }
 
 
@@ -188,11 +209,22 @@ public class MainActivity extends Activity {
         @Override
         public void run() {
             int i = 0;
-
-            while (ConnectedEndPointId != "") {
+            HandlerThread thread = new HandlerThread("takepics");
+            thread.start();
+            while (ConnectedEndPointId.compareTo("") != 0) {
                 Log.d(TAG, "i is " + i);
                 // get an image from the camera
-                mCameraHandler.takePicture();
+
+                mCameraHandler.takePicture(new Handler(thread.getLooper()));
+                try {
+                    synchronized (myThread) {
+                        myThread.wait();
+                    }
+                    //Thread.sleep(sleeptime);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                //we should not need this, but... not working.
                 try {
                     Thread.sleep(sleeptime);
                 } catch (InterruptedException e) {

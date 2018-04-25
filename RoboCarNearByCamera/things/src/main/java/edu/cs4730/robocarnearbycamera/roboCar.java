@@ -124,7 +124,7 @@ public class roboCar {
                 mMotorHat.setMotorSpeed(motor, SPEED_TURNING_OUTSIDE);
                 mMotorHat.setMotorState(motor, MotorHat.MOTOR_STATE_CW);  //forward
             }
-            logthis("set everything for Left");
+            logthis("set everything for Right");
         } catch (IOException e) {
             Log.e(TAG, "Error setting motor state", e);
 
