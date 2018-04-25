@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
 
     Button btn_con;
 
-    private  String ConnectedEndPointId;
+    private String ConnectedEndPointId;
     /**
      * The connection strategy we'll use for Nearby Connections. In this case, we've decided on
      * P2P_STAR, which is a combination of Bluetooth Classic and WiFi Hotspots.  this is 1 to many, so 1 advertise and many discovery.
@@ -58,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
         btn_con.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.wtf(TAG, "hit button damn it.");
                 startDiscovering();
                 btn_con.setActivated(false);
             }
@@ -108,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
      */
     protected void startDiscovering() {
 
-        DiscoveryOptions.Builder builder = new  DiscoveryOptions.Builder();
+        DiscoveryOptions.Builder builder = new DiscoveryOptions.Builder();
         Nearby.getConnectionsClient(MainActivity.this).
             startDiscovery(
                 MainActivity.ServiceId,   //id for the service to be discovered.  ie, what are we looking for.
@@ -129,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 },
 
-                builder.setStrategy(STRATEGY).build() )  //options for discovery.
+                builder.setStrategy(STRATEGY).build())  //options for discovery.
             .addOnSuccessListener(
                 new OnSuccessListener<Void>() {
                     @Override
@@ -181,15 +182,15 @@ public class MainActivity extends AppCompatActivity {
                                 logthis("Received data is " + stuff);
 
                             } else if (payload.getType() == Payload.Type.FILE) {
-                                logthis("We got a file. why?");
+                                logthis("We got a file.");
                                 // Add this to our tracking map, so that we can retrieve the payload later.
-                               // incomingPayloads.put(payload.getId(), payload);
+                                incomingPayloads.put(payload.getId(), payload);
                             } else if (payload.getType() == Payload.Type.STREAM) {
                                 //payload.asStream().asInputStream()
-                                logthis("We got a stream,  handled");
+                                logthis("We got a stream,  handled, ignoring actually.");
                                 //incomingPayloads.put(payload.getId(), payload);
-                                Bitmap mypic = BitmapFactory.decodeStream(payload.asStream().asInputStream());
-                                myImageView.setImageBitmap(mypic);
+                                //Bitmap mypic = BitmapFactory.decodeStream(payload.asStream().asInputStream());
+                                //myImageView.setImageBitmap(mypic);
                             }
                         }
 
@@ -198,17 +199,23 @@ public class MainActivity extends AppCompatActivity {
                             //if stream or file, we need to know when the transfer has finished.  ignoring this right now.
 
                             if (payloadTransferUpdate.getStatus() == PayloadTransferUpdate.Status.SUCCESS) {
-//                                Payload payload = incomingPayloads.remove(payloadTransferUpdate.getPayloadId());
-//
-//                                // Payload payload = incomingPayloads.remove();
-//                                long size = payloadTransferUpdate.getTotalBytes();
-//                                if( size > 0) {
-//
-//                                    Bitmap mypic = BitmapFactory.decodeByteArray(payloadTransferUpdate.get, 0, size);
-//
-//                                    myImageView.setImageBitmap(mypic);
-//                                }
-                                Log.wtf(TAG, "something is done!");
+                                Payload payload = incomingPayloads.remove(payloadTransferUpdate.getPayloadId());
+                                if (payload == null) {
+                                    Log.wtf(TAG, "we got a NULL payload...");
+                                    return;  // don't know why this happens.
+                                }
+                                if (payload.getType() == Payload.Type.FILE) {
+                                    File payloadFile = payload.asFile().asJavaFile();
+                                    Bitmap mypic = BitmapFactory.decodeFile(payloadFile.getAbsolutePath());
+                                    myImageView.setImageBitmap(mypic);
+                                } else if (payload.getType() == Payload.Type.STREAM) {
+                                    long size = payloadTransferUpdate.getTotalBytes();
+                                    if (size > 0) {
+//                                        Bitmap mypic = BitmapFactory.decodeByteArray(payloadTransferUpdate.get, 0, size);
+//                                        myImageView.setImageBitmap(mypic);
+                                    }
+                                    Log.wtf(TAG, "something is done!");
+                                }
                             }
                         }
                     });
@@ -221,7 +228,7 @@ public class MainActivity extends AppCompatActivity {
                         // We're connected! Can now start sending and receiving data.
                         stopDiscovering();
                         ConnectedEndPointId = endpointId;
-                        logthis("Status ok, sending Hi message");
+                        logthis("Status ok we are connected.");
                         // send("Hi from Discovery");
                         break;
                     case ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED:

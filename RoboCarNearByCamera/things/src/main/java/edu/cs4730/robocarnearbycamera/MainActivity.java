@@ -23,8 +23,10 @@ import com.google.android.things.contrib.driver.motorhat.MotorHat;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
 /**
@@ -66,6 +68,8 @@ public class MainActivity extends Activity {
     ImageView iv_cam;
     String ConnectedEndPointId;
 
+    File file;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -104,7 +108,7 @@ public class MainActivity extends Activity {
                     // if -1, then connect died, and stop sending.  same for all of them, start advert again.
                     //stop sending pict's.
                     ConnectedEndPointId = "";
-                        //should auto stop...
+                    //should auto stop...
                     //and startup the advertising again.
                     nearByMgr.startAdvertising();
                 }
@@ -148,19 +152,41 @@ public class MainActivity extends Activity {
                 @Override
                 public void onImageAvailable(ImageReader imageReader) {
                     // iv_cam.set  imageReader.acquireNextImage());
-                   // Log.wtf(TAG, "got a picture, attempting to display");
+                    // Log.wtf(TAG, "got a picture, attempting to display");
                     Image image = imageReader.acquireLatestImage();
-                                        ByteBuffer buffer = image.getPlanes()[0].getBuffer();
+                    ByteBuffer buffer = image.getPlanes()[0].getBuffer();
                     byte[] bytes = new byte[buffer.capacity()];
                     buffer.get(bytes);
+                    //save the file.
+                    OutputStream output = null;
+                    try {
+                        output = new FileOutputStream(file);
+                        output.write(bytes);
+                        output.flush();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    } finally {
+                        if (null != output) {
+                            try {
+                                output.close();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+
+                        }
+                    }
+                    nearByMgr.sendFile(file);
                     Bitmap bitmapImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
                     iv_cam.setImageBitmap(bitmapImage);
-                    InputStream targetStream = new ByteArrayInputStream(bytes);
-                    nearByMgr.sendStream(targetStream);
+
+                    //Well this didn't work,
+//                    InputStream targetStream = new ByteArrayInputStream(bytes);
+//                    nearByMgr.sendStream(targetStream);
+
                     //  mCameraHandler.resetCamera();
                     closeCamera();  //this is a hack that needs fixed.
                     initCamera();
-                    synchronized(myThread) {
+                    synchronized (myThread) {
                         Log.d(TAG, "waiting up thread to take next pic.");
                         myThread.notify(); //in theory, this should wakeup the thread.  OR myThread.notifyAll()
                     }
@@ -211,16 +237,26 @@ public class MainActivity extends Activity {
             int i = 0;
             HandlerThread thread = new HandlerThread("takepics");
             thread.start();
+            File mediaStorageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+            if (!mediaStorageDir.exists()) {
+                if (!mediaStorageDir.mkdirs()) {
+                    Log.d("MyCameraApp", "failed to create directory");
+                    return;
+                }
+            }
+
             while (ConnectedEndPointId.compareTo("") != 0) {
                 Log.d(TAG, "i is " + i);
                 // get an image from the camera
+                file = new File(mediaStorageDir.getPath() + File.separator +
+                    "IMG_" + i + ".jpg");
 
                 mCameraHandler.takePicture(new Handler(thread.getLooper()));
                 try {
                     synchronized (myThread) {
                         myThread.wait();
                     }
-                    //Thread.sleep(sleeptime);
+
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
