@@ -4,7 +4,7 @@ android {
     compileSdkVersion 27
     defaultConfig {
         applicationId "edu.cs4730.weatherstationrainbowhatonly"
-        minSdkVersion 26
+        minSdkVersion 27
         targetSdkVersion 27
         versionCode 1
         versionName "1.0"
@@ -21,12 +21,12 @@ android {
 dependencies {
     //https://bintray.com/google/androidthings for versions.
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'com.android.support.constraint:constraint-layout:1.0.2'
-    compileOnly 'com.google.android.things:androidthings:0.7-devpreview'
-    implementation 'com.google.android.things.contrib:driver-rainbowhat:0.10'
-    implementation 'com.google.android.things.contrib:driver-button:0.6'
-    implementation 'com.google.android.things.contrib:driver-bmx280:0.5'
-    implementation 'com.google.android.things.contrib:driver-ht16k33:0.5'
-    implementation 'com.google.android.things.contrib:driver-apa102:0.6'
-    implementation 'com.google.android.things.contrib:driver-pwmspeaker:0.4'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.0'
+    compileOnly 'com.google.android.things:androidthings:1.0'
+    implementation 'com.google.android.things.contrib:driver-rainbowhat:1.0'
+    implementation 'com.google.android.things.contrib:driver-button:1.0'
+    implementation 'com.google.android.things.contrib:driver-bmx280:1.0'
+    implementation 'com.google.android.things.contrib:driver-ht16k33:1.0'
+    implementation 'com.google.android.things.contrib:driver-apa102:1.0'
+    implementation 'com.google.android.things.contrib:driver-pwmspeaker:1.0'
 }

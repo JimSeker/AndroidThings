@@ -4,7 +4,7 @@ android {
     compileSdkVersion 27
     defaultConfig {
         applicationId "edu.cs4730.robocarnearbycamera"
-        minSdkVersion 26
+        minSdkVersion 27
         targetSdkVersion 27
         versionCode 1
         versionName "1.0"
@@ -20,10 +20,10 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    compileOnly 'com.google.android.things:androidthings:0.8-devpreview'
+    compileOnly 'com.google.android.things:androidthings:1.0'
     implementation 'com.android.support:support-annotations:27.1.1'
-    implementation 'com.google.android.things.contrib:driver-motorhat:0.2'
-    implementation 'com.google.android.things.contrib:driver-ht16k33:0.5'
-    implementation 'com.google.android.things.contrib:driver-button:0.6'
-    implementation 'com.google.android.gms:play-services-nearby:15.0.0'
+    implementation 'com.google.android.things.contrib:driver-motorhat:1.0'
+    implementation 'com.google.android.things.contrib:driver-ht16k33:1.0'
+    implementation 'com.google.android.things.contrib:driver-button:1.0'
+    implementation 'com.google.android.gms:play-services-nearby:15.0.1'
 }
