@@ -1,6 +1,8 @@
 google Android Things examples
 ===========
 
+As google has killed this project and starting Jan 1, 2023, you can't even make an android things project anymore, this repo is now archived and left for historial purproses only.  what a waste google, yet another good idea that didnt caught on in 2 seconds, so you killed it.
+
 <b>ThingsWeatherStationsample</b> Google example for weather station with Rainbow Hat.
 
 <b>WeatherStationRainbowHatonly</b> similar to google's weather station exampe, except only usable on the hat, plus uses button B and C.
